@@ -65,6 +65,13 @@ functions:
       - httpApi:
           path: /ask
           method: post
+  presign:
+    handler: src/handlers/presign.handler
+    events:
+      - httpApi:
+          path: /presign
+          method: post
+
 resources:
   Resources:
     DprogBucket:
