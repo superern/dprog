@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-JAR_DIR="${ROOT_DIR}/../infra/queue"
+JAR_DIR="${ROOT_DIR}/scripts"
 JAR_PATH="${JAR_DIR}/elasticmq-server.jar"
 PORT="${SQS_PORT:-9324}"
 VERSION="${ELASTICMQ_VERSION:-1.6.7}"
