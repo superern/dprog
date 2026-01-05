@@ -316,6 +316,91 @@ a {
   gap: 12px;
 }
 
+.dropzone {
+  border: 2px dashed var(--line);
+  border-radius: var(--radius-md);
+  background: #fdfaf2;
+  padding: 24px;
+  text-align: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.dropzone.dragging {
+  border-color: #1c1917;
+  background: #f7efe2;
+}
+
+.dropzone-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.format-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: rgba(17, 18, 19, 0.65);
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.file-row {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  background: #fffdf7;
+  display: grid;
+  gap: 6px;
+}
+
+.file-name {
+  font-weight: 600;
+  margin: 0;
+}
+
+.file-meta {
+  font-size: 0.85rem;
+  color: rgba(17, 18, 19, 0.6);
+  margin: 0;
+}
+
+.status-pill {
+  width: fit-content;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #efe5d2;
+  color: #4b3b2a;
+}
+
+.status-pill.presigning,
+.status-pill.uploading,
+.status-pill.ingesting {
+  background: #f1e9d7;
+  color: #5c4a36;
+}
+
+.status-pill.done {
+  background: #e3f1e1;
+  color: #2e5d34;
+}
+
+.status-pill.error {
+  background: #f8e0d8;
+  color: #8a3a1f;
+}
+
 @media (max-width: 900px) {
   .hero {
     grid-template-columns: 1fr;
