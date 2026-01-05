@@ -67,7 +67,7 @@ functions:
     handler: src/handlers/ingest/presign.handler
     events:
       - httpApi:
-          path: /presign
+          path: /ingest/presign
           method: post
   ask:
     handler: src/handlers/ask.handler

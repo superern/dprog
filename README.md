@@ -105,6 +105,7 @@ Optional:
 - PINECONE_HOST (use the index host URL if the SDK cannot resolve it)
 - PINECONE_NAMESPACE (default: empty string)
 - AWS_REGION (default: us-east-1)
+- S3_ENDPOINT (default: http://localhost:4569)
 - SQS_ENDPOINT (default: http://localhost:9324)
 - SQS_QUEUE_URL (default: http://localhost:9324/000000000000/ingest-q)
 - AWS_ACCESS_KEY_ID (default: root for local SQS)

@@ -19,7 +19,11 @@ if (!bucket) {
 const s3Client = new S3Client({
   region: process.env.AWS_REGION ?? "us-east-1",
   endpoint: endpoint || undefined,
-  forcePathStyle: Boolean(endpoint)
+  forcePathStyle: Boolean(endpoint),
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "root",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "root"
+  }
 });
 
 export async function handler(event: APIGatewayProxyEventV2) {
