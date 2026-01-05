@@ -1,0 +1,25 @@
+{
+  "name": "dprog-backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "serverless package",
+    "deploy": "serverless deploy",
+    "offline": "serverless offline"
+  },
+  "dependencies": {
+    "@pinecone-database/pinecone": "^2.0.1",
+    "openai": "^4.56.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.137",
+    "@types/node": "^20.14.12",
+    "esbuild": "^0.23.1",
+    "serverless": "^3.38.0",
+    "serverless-esbuild": "^1.54.4",
+    "serverless-offline": "^13.6.0",
+    "serverless-dotenv-plugin": "^6.0.0",
+    "typescript": "^5.5.4"
+  }
+}
