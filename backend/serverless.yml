@@ -7,6 +7,8 @@ provider:
   runtime: nodejs18.x
   region: ${env:AWS_REGION, "us-east-1"}
   environment:
+    S3_BUCKET: ${env:S3_BUCKET, "dprog"}
+    S3_ENDPOINT: ${env:S3_ENDPOINT, ""}
     OPENAI_API_KEY: ${env:OPENAI_API_KEY}
     OPENAI_EMBED_MODEL: ${env:OPENAI_EMBED_MODEL, "text-embedding-3-small"}
     OPENAI_CHAT_MODEL: ${env:OPENAI_CHAT_MODEL, "gpt-4o-mini"}
@@ -63,3 +65,9 @@ functions:
       - httpApi:
           path: /ask
           method: post
+resources:
+  Resources:
+    DprogBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: dprog

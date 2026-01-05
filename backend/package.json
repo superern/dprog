@@ -5,7 +5,8 @@
   "scripts": {
     "build": "serverless package",
     "deploy": "serverless deploy",
-    "offline": "serverless offline"
+    "offline": "serverless offline",
+    "s3:init": "bash scripts/init-s3-local.sh"
   },
   "dependencies": {
     "@pinecone-database/pinecone": "^2.0.1",
