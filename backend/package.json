@@ -18,6 +18,7 @@
     "serverless": "^3.38.0",
     "serverless-esbuild": "^1.54.4",
     "serverless-offline": "^13.6.0",
+    "serverless-s3-local": "^0.7.0",
     "serverless-dotenv-plugin": "^6.0.0",
     "typescript": "^5.5.4"
   }

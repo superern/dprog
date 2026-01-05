@@ -19,6 +19,7 @@ plugins:
   - serverless-esbuild
   - serverless-offline
   - serverless-dotenv-plugin
+  - serverless-s3-local
 
 useDotenv: true
 
@@ -32,6 +33,11 @@ custom:
     format: "cjs"
   serverless-offline:
     httpPort: 8080
+  s3:
+    host: localhost
+    port: 4569
+    directory: .s3
+    cors: true
   dotenv:
     path: .env
 
