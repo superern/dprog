@@ -89,3 +89,4 @@ typings/
 .esbuild
 .idea
 .DS_Store
+*.jar

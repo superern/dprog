@@ -19,10 +19,10 @@ provider:
 
 plugins:
   - serverless-esbuild
+  - serverless-offline-sqs
   - serverless-offline
   - serverless-dotenv-plugin
   - serverless-s3-local
-  - serverless-offline-sqs
 
 useDotenv: true
 
@@ -41,13 +41,12 @@ custom:
     port: 4569
     directory: .s3
   serverless-offline-sqs:
-    autoCreate: true
+    autoCreate: false
     apiVersion: "2012-11-05"
     endpoint: http://localhost:9324
     region: ${env:AWS_REGION, "us-east-1"}
-    queues:
-      - name: ingest-q
-      - name: ingest-dlq
+    accessKeyId: root
+    secretAccessKey: root
   dotenv:
     path: .env
 
@@ -70,6 +69,11 @@ functions:
       - httpApi:
           path: /presign
           method: post
+  ingestQueueWorker:
+    handler: src/handlers/sqs.handler
+    events:
+      - sqs:
+          arn: arn:aws:sqs:${self:provider.region}:000000000000:ingest-q
 
 resources:
   Resources:
@@ -77,3 +81,17 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: dprog
+    IngestDlq:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ingest-dlq
+    IngestQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ingest-q
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - IngestDlq
+              - Arn
+          maxReceiveCount: 3
