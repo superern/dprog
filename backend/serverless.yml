@@ -1,0 +1,48 @@
+service: dprog-backend
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${env:AWS_REGION, "us-east-1"}
+  environment:
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY}
+    OPENAI_EMBED_MODEL: ${env:OPENAI_EMBED_MODEL, "text-embedding-3-small"}
+    OPENAI_CHAT_MODEL: ${env:OPENAI_CHAT_MODEL, "gpt-4o-mini"}
+    PINECONE_API_KEY: ${env:PINECONE_API_KEY}
+    PINECONE_INDEX: ${env:PINECONE_INDEX}
+    PINECONE_NAMESPACE: ${env:PINECONE_NAMESPACE, ""}
+
+plugins:
+  - serverless-esbuild
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+useDotenv: true
+
+custom:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    target: "node18"
+    platform: "node"
+  serverless-offline:
+    httpPort: 8080
+  dotenv:
+    path: .env
+
+functions:
+  ingest:
+    handler: src/handlers/ingest.handler
+    events:
+      - httpApi:
+          path: /ingest
+          method: post
+  ask:
+    handler: src/handlers/ask.handler
+    events:
+      - httpApi:
+          path: /ask
+          method: post
