@@ -12,6 +12,7 @@ provider:
     OPENAI_CHAT_MODEL: ${env:OPENAI_CHAT_MODEL, "gpt-4o-mini"}
     PINECONE_API_KEY: ${env:PINECONE_API_KEY}
     PINECONE_INDEX: ${env:PINECONE_INDEX}
+    PINECONE_HOST: ${env:PINECONE_HOST, ""}
     PINECONE_NAMESPACE: ${env:PINECONE_NAMESPACE, ""}
 
 plugins:
@@ -28,6 +29,7 @@ custom:
     sourcemap: true
     target: "node18"
     platform: "node"
+    format: "cjs"
   serverless-offline:
     httpPort: 8080
   dotenv:

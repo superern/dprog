@@ -22,6 +22,7 @@ POST /ask
 - OPENAI_CHAT_MODEL (default: gpt-4o-mini)
 - PINECONE_API_KEY
 - PINECONE_INDEX
+- PINECONE_HOST (optional, use the index host URL if the SDK cannot resolve it)
 - PINECONE_NAMESPACE (optional)
 
 ## Local scripts
