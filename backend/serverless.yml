@@ -20,6 +20,7 @@ plugins:
   - serverless-offline
   - serverless-dotenv-plugin
   - serverless-s3-local
+  - serverless-offline-sqs
 
 useDotenv: true
 
@@ -38,6 +39,14 @@ custom:
     port: 4569
     directory: .s3
     cors: true
+  serverless-offline-sqs:
+    autoCreate: true
+    apiVersion: "2012-11-05"
+    endpoint: http://localhost:9324
+    region: ${env:AWS_REGION, "us-east-1"}
+    queues:
+      - name: ingest-q
+      - name: ingest-dlq
   dotenv:
     path: .env
 
