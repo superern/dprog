@@ -17,7 +17,7 @@ type IngestResponse = {
 const emptyDoc = (): DocInput => ({ id: "", title: "", content: "" });
 
 function resolveApiBase() {
-  const base = process.env.DRPOG_API ?? "";
+  const base = process.env.NEXT_PUBLIC_DPROG_API ?? "";
   return base.endsWith("/") ? base.slice(0, -1) : base;
 }
 
