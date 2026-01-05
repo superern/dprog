@@ -57,12 +57,18 @@ export async function handler(event: SQSEvent) {
       throw new Error("SQS message missing key, docId, or title.");
     }
 
-    const response = await s3Client.send(
-      new GetObjectCommand({
-        Bucket: bucket,
-        Key: key
-      })
-    );
+    let response;
+    try {
+      response = await s3Client.send(
+        new GetObjectCommand({
+          Bucket: bucket,
+          Key: key
+        })
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to fetch s3://${bucket}/${key}: ${message}`);
+    }
 
     const contentType = message.contentType || response.ContentType || "application/octet-stream";
     const rawText = await streamToString(response.Body);
