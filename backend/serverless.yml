@@ -16,6 +16,8 @@ provider:
     PINECONE_INDEX: ${env:PINECONE_INDEX}
     PINECONE_HOST: ${env:PINECONE_HOST, ""}
     PINECONE_NAMESPACE: ${env:PINECONE_NAMESPACE, ""}
+    SQS_ENDPOINT: ${env:SQS_ENDPOINT, "http://localhost:9324"}
+    SQS_QUEUE_URL: ${env:SQS_QUEUE_URL, "http://localhost:9324/000000000000/ingest-q"}
 
 plugins:
   - serverless-esbuild
@@ -68,6 +70,12 @@ functions:
     events:
       - httpApi:
           path: /presign
+          method: post
+  enqueue:
+    handler: src/handlers/enqueue.handler
+    events:
+      - httpApi:
+          path: /enqueue
           method: post
   ingestQueueWorker:
     handler: src/handlers/sqs.handler
