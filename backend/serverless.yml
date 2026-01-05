@@ -54,22 +54,26 @@ custom:
 
 functions:
   ingest:
-    handler: src/handlers/ingest.handler
+    handler: src/handlers/ingest/ingest.handler
+    events:
+      - sqs: arn:aws:sqs:${self:provider.region}:000000000000:ingest-q
+  ingestRequest:
+    handler: src/handlers/ingest/request.handler
     events:
       - httpApi:
           path: /ingest
+          method: post
+  presign:
+    handler: src/handlers/ingest/presign.handler
+    events:
+      - httpApi:
+          path: /presign
           method: post
   ask:
     handler: src/handlers/ask.handler
     events:
       - httpApi:
           path: /ask
-          method: post
-  presign:
-    handler: src/handlers/presign.handler
-    events:
-      - httpApi:
-          path: /presign
           method: post
   enqueue:
     handler: src/handlers/enqueue.handler
