@@ -46,10 +46,17 @@ export async function handler(event: APIGatewayProxyEventV2) {
       continue;
     }
 
-    const namespace = pineconeIndex.namespace(pineconeNamespace);
+    const index = pineconeNamespace
+      ? pineconeIndex.namespace(pineconeNamespace)
+      : pineconeIndex;
 
     // Remove any previous chunks for this docId to avoid duplicates.
-    await namespace.deleteMany({ filter: { docId: doc.id } });
+    try {
+      await index.deleteMany({ docId: doc.id });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn("Pinecone deleteMany failed, continuing with upsert:", message);
+    }
 
     const embeddings = await embedTexts(chunks.map((chunk) => chunk.text));
     const vectors = chunks.map((chunk, index) => ({
@@ -63,7 +70,7 @@ export async function handler(event: APIGatewayProxyEventV2) {
       }
     }));
 
-    await namespace.upsert(vectors);
+    await index.upsert(vectors);
     ingestedChunks += vectors.length;
   }
 

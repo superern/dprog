@@ -49,9 +49,11 @@ export async function handler(event: APIGatewayProxyEventV2) {
 
   try {
     const [questionEmbedding] = await embedTexts([question]);
-    const namespace = pineconeIndex.namespace(pineconeNamespace);
+    const index = pineconeNamespace
+      ? pineconeIndex.namespace(pineconeNamespace)
+      : pineconeIndex;
 
-    const queryResponse = await namespace.query({
+    const queryResponse = await index.query({
       vector: questionEmbedding,
       topK,
       includeMetadata: true
