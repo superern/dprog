@@ -40,7 +40,6 @@ custom:
     host: localhost
     port: 4569
     directory: .s3
-    cors: true
   serverless-offline-sqs:
     autoCreate: true
     apiVersion: "2012-11-05"

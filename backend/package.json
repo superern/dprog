@@ -7,6 +7,7 @@
     "deploy": "serverless deploy",
     "offline": "serverless offline",
     "s3:init": "bash scripts/init-s3-local.sh"
+    "sqs:start": "bash scripts/run-elasticmq.sh"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.637.0",
