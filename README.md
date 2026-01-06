@@ -59,33 +59,33 @@ npm install
 
 2) Add `backend/.env` with required variables (see below).
 
-3) Start local SQS (ElasticMQ)
+3) Start LocalStack (S3 + SQS)
 ```
-npm run sqs:start
-```
-This downloads the ElasticMQ server JAR into `backend/scripts/elasticmq-server.jar` if it's missing.
-
-To verify local SQS is working (pick one):
-
-Option A: call the test endpoint (sends a message to `ingest-q`)
-```
-curl -X POST http://localhost:8080/enqueue \
-  -H 'Content-Type: application/json' \
-  -d '{"message":"hello from api"}'
+cd backend
+npm run localstack:start
 ```
 
-Option B: check the queue exists with AWS CLI
+4) Initialize LocalStack resources (bucket + queue, requires AWS CLI)
 ```
-AWS_REGION=us-east-1 AWS_ACCESS_KEY_ID=root AWS_SECRET_ACCESS_KEY=root \
-aws --endpoint-url http://localhost:9324 sqs get-queue-url --queue-name ingest-q
-```
-
-4) (Optional) Initialize local S3 bucket and prefixes for `dprog` (the offline S3 service will create the local directory on first run):
-```
-npm run s3:init
+npm run localstack:init
 ```
 
-5) Run offline
+5) Add CORS to the bucket (required for browser uploads)
+```
+aws --endpoint-url http://localhost:4566 s3api put-bucket-cors \
+  --bucket dprog \
+  --cors-configuration '{
+    "CORSRules": [{
+      "AllowedOrigins": ["http://localhost:3000"],
+      "AllowedMethods": ["PUT","GET","HEAD","POST"],
+      "AllowedHeaders": ["*"],
+      "ExposeHeaders": ["ETag"],
+      "MaxAgeSeconds": 30000
+    }]
+  }'
+```
+
+6) Run offline (this will auto-create SQS queues if missing)
 ```
 npm run offline
 ```
@@ -105,11 +105,11 @@ Optional:
 - PINECONE_HOST (use the index host URL if the SDK cannot resolve it)
 - PINECONE_NAMESPACE (default: empty string)
 - AWS_REGION (default: us-east-1)
-- S3_ENDPOINT (default: http://localhost:4569)
-- SQS_ENDPOINT (default: http://localhost:9324)
-- SQS_QUEUE_URL (default: http://localhost:9324/000000000000/ingest-q)
-- AWS_ACCESS_KEY_ID (default: root for local SQS)
-- AWS_SECRET_ACCESS_KEY (default: root for local SQS)
+- S3_ENDPOINT (default: http://localhost:4566)
+- SQS_ENDPOINT (default: http://localhost:4566)
+- SQS_QUEUE_URL (default: http://localhost:4566/000000000000/ingest-q)
+- AWS_ACCESS_KEY_ID (default: test for LocalStack)
+- AWS_SECRET_ACCESS_KEY (default: test for LocalStack)
 
 ## Example requests
 

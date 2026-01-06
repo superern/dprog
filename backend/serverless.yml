@@ -16,15 +16,14 @@ provider:
     PINECONE_INDEX: ${env:PINECONE_INDEX}
     PINECONE_HOST: ${env:PINECONE_HOST, ""}
     PINECONE_NAMESPACE: ${env:PINECONE_NAMESPACE, ""}
-    SQS_ENDPOINT: ${env:SQS_ENDPOINT, "http://localhost:9324"}
-    SQS_QUEUE_URL: ${env:SQS_QUEUE_URL, "http://localhost:9324/000000000000/ingest-q"}
+    SQS_ENDPOINT: ${env:SQS_ENDPOINT, "http://localhost:4566"}
+    SQS_QUEUE_URL: ${env:SQS_QUEUE_URL, "http://localhost:4566/000000000000/ingest-q"}
 
 plugins:
   - serverless-esbuild
   - serverless-offline-sqs
   - serverless-offline
   - serverless-dotenv-plugin
-  - serverless-s3-local
 
 useDotenv: true
 
@@ -38,17 +37,13 @@ custom:
     format: "cjs"
   serverless-offline:
     httpPort: 8080
-  s3:
-    host: localhost
-    port: 4569
-    directory: .s3
   serverless-offline-sqs:
-    autoCreate: false
+    autoCreate: true
     apiVersion: "2012-11-05"
-    endpoint: http://localhost:9324
+    endpoint: http://localhost:4566
     region: ${env:AWS_REGION, "us-east-1"}
-    accessKeyId: root
-    secretAccessKey: root
+    accessKeyId: ${env:AWS_ACCESS_KEY_ID, "test"}
+    secretAccessKey: ${env:AWS_SECRET_ACCESS_KEY, "test"}
   dotenv:
     path: .env
 
@@ -75,18 +70,6 @@ functions:
       - httpApi:
           path: /ask
           method: post
-  enqueue:
-    handler: src/handlers/enqueue.handler
-    events:
-      - httpApi:
-          path: /enqueue
-          method: post
-  ingestQueueWorker:
-    handler: src/handlers/sqs.handler
-    events:
-      - sqs:
-          arn: arn:aws:sqs:${self:provider.region}:000000000000:ingest-q
-
 resources:
   Resources:
     DprogBucket:
@@ -101,9 +84,3 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ingest-q
-        RedrivePolicy:
-          deadLetterTargetArn:
-            Fn::GetAtt:
-              - IngestDlq
-              - Arn
-          maxReceiveCount: 3

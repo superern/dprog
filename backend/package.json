@@ -5,11 +5,9 @@
   "scripts": {
     "build": "serverless package",
     "deploy": "serverless deploy",
-    "preoffline": "node scripts/init-sqs-local.js",
     "offline": "serverless offline",
-    "s3:init": "bash scripts/init-s3-local.sh",
-    "sqs:init": "node scripts/init-sqs-local.js",
-    "sqs:start": "bash scripts/run-elasticmq.sh"
+    "localstack:start": "docker run --rm -it -p 4566:4566 -e SERVICES=s3,sqs -e AWS_DEFAULT_REGION=us-east-1 localstack/localstack",
+    "localstack:init": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 s3 mb s3://dprog && AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 sqs create-queue --queue-name ingest-q"
   },
   "dependencies": {
     "@aws-sdk/client-sqs": "^3.637.0",
@@ -26,7 +24,6 @@
     "serverless-esbuild": "^1.54.4",
     "serverless-offline": "^12.0.0",
     "serverless-offline-sqs": "^7.0.0",
-    "serverless-s3-local": "^0.7.0",
     "serverless-dotenv-plugin": "^6.0.0",
     "typescript": "^5.5.4"
   }
