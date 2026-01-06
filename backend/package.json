@@ -5,9 +5,22 @@
   "scripts": {
     "build": "serverless package",
     "deploy": "serverless deploy",
-    "offline": "serverless offline",
-    "localstack:start": "docker run --rm -it -p 4566:4566 -e SERVICES=s3,sqs -e AWS_DEFAULT_REGION=us-east-1 localstack/localstack",
-    "localstack:init": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 s3 mb s3://dprog && AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 sqs create-queue --queue-name ingest-q && AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 s3api put-bucket-cors --bucket dprog --cors-configuration '{\"CORSRules\":[{\"AllowedOrigins\":[\"http://localhost:3000\"],\"AllowedMethods\":[\"PUT\",\"GET\",\"HEAD\",\"POST\"],\"AllowedHeaders\":[\"*\"],\"ExposeHeaders\":[\"ETag\"],\"MaxAgeSeconds\":30000}]}'"
+    "backend": "serverless offline",
+    "tika:start": "docker pull apache/tika:latest && docker run --rm -p 9998:9998 apache/tika:latest",
+    "localstack:init": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 s3 mb s3://dprog && AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 sqs create-queue --queue-name ingest-q && AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 s3api put-bucket-cors --bucket dprog --cors-configuration '{\"CORSRules\":[{\"AllowedOrigins\":[\"http://localhost:3000\"],\"AllowedMethods\":[\"PUT\",\"GET\",\"HEAD\",\"POST\"],\"AllowedHeaders\":[\"*\"],\"ExposeHeaders\":[\"ETag\"],\"MaxAgeSeconds\":30000}]}'",
+    "localstack:docker": "docker pull localstack/localstack:latest && (docker ps -q -f name=dprog-localstack | grep -q . || docker run -d --name dprog-localstack --add-host=host.docker.internal:host-gateway -p 4566:4566 -e SERVICES=cloudformation,iam,lambda,apigateway,logs,sts,s3,sqs -e AWS_DEFAULT_REGION=us-east-1 -e LAMBDA_EXECUTOR=docker-reuse -v /var/run/docker.sock:/var/run/docker.sock localstack/localstack)",
+    "localstack:wait": "node -e \"const http=require('http');const url='http://localhost:4566/_localstack/health';const start=Date.now();const check=()=>{http.get(url,res=>{if(res.statusCode===200){process.exit(0);}res.resume();retry();}).on('error',retry);};const retry=()=>{if(Date.now()-start>60000){console.error('LocalStack not ready');process.exit(1);}setTimeout(check,1000);};check();\"",
+    "localstack:start": "npm run localstack:docker && npm run localstack:wait && npm run localstack:init",
+    "localstack:stop": "docker rm -f dprog-localstack",
+    "localstack:log": "docker logs -f dprog-localstack",
+    "deploy:local": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 TIKA_URL=http://host.docker.internal:9998 S3_ENDPOINT=http://host.docker.internal:4566 SQS_ENDPOINT=http://host.docker.internal:4566 SQS_QUEUE_URL=http://host.docker.internal:4566/000000000000/ingest-q serverless deploy --stage local",
+    "log:ingest": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 \\\n  aws --endpoint-url http://localhost:4566 logs tail /aws/lambda/dprog-backend-local-ingest --follow",
+    "log:textract": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 \\\n  aws --endpoint-url http://localhost:4566 logs tail /aws/lambda/dprog-backend-local-textract --follow",
+    "queue:depth": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 sqs get-queue-attributes --queue-url http://localhost:4566/000000000000/ingest-q --attribute-names ApproximateNumberOfMessages ApproximateNumberOfMessagesNotVisible",
+    "queue:purge": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 \\\n  aws --endpoint-url http://localhost:4566 sqs purge-queue \\\n    --queue-url http://localhost:4566/000000000000/ingest-q",
+    "file:upload": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 \\\n  aws --endpoint-url http://localhost:4566 s3 cp ./sample1.pdf s3://dprog/raw/sample.pdf",
+    "lambda:ingest": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 lambda get-function-configuration --function-name dprog-backend-local-ingest",
+    "lambda:textract": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 lambda get-function-configuration --function-name dprog-backend-local-textract"
   },
   "dependencies": {
     "@aws-sdk/client-sqs": "^3.637.0",
@@ -24,6 +37,7 @@
     "serverless-esbuild": "^1.54.4",
     "serverless-offline": "^12.0.0",
     "serverless-offline-sqs": "^7.0.0",
+    "serverless-localstack": "^1.0.0",
     "serverless-dotenv-plugin": "^6.0.0",
     "typescript": "^5.5.4"
   }

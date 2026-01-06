@@ -59,18 +59,31 @@ npm install
 
 2) Add `backend/.env` with required variables (see below).
 
-3) Start LocalStack (S3 + SQS)
+3) Start LocalStack (CloudFormation + Lambda + API Gateway + S3 + SQS)
 ```
 cd backend
 npm run localstack:start
 ```
+The LocalStack container is started with `--add-host=host.docker.internal:host-gateway` so Lambdas can reach services running on your host.
+If you get a "Docker not available" Lambda error, ensure Docker is running. The `localstack:start` script mounts the Docker socket so LocalStack can run Lambda containers.
 
-4) Initialize LocalStack resources (bucket + queue + CORS, requires AWS CLI)
+4) Start Tika for text extraction
+```
+npm run tika:start
+```
+
+5) Initialize LocalStack resources (bucket + queue + CORS, requires AWS CLI)
 ```
 npm run localstack:init
 ```
 
-5) Add CORS to the bucket (required for browser uploads)
+6) Deploy functions to LocalStack (wires S3 -> textract notifications)
+```
+npm run deploy:local
+```
+This deploy sets `TIKA_URL` to `http://host.docker.internal:9998` and LocalStack endpoints to `http://host.docker.internal:4566` so Lambdas can reach Tika and LocalStack from inside Docker.
+
+7) Add CORS to the bucket (required for browser uploads)
 ```
 aws --endpoint-url http://localhost:4566 s3api put-bucket-cors \
   --bucket dprog \
@@ -85,12 +98,22 @@ aws --endpoint-url http://localhost:4566 s3api put-bucket-cors \
   }'
 ```
 
-6) Run offline (this will auto-create SQS queues if missing)
+8) Run offline (this will auto-create SQS queues if missing)
 ```
 npm run offline
 ```
 
 The API will be available at `http://localhost:8080`.
+
+For LocalStack-deployed APIs (used for S3-triggered textract), get the REST API ID:
+```
+AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 \
+aws --endpoint-url http://localhost:4566 apigateway get-rest-apis
+```
+Then call:
+```
+http://<api-id>.execute-api.localhost.localstack.cloud:4566/<stage>/ingest/presign
+```
 
 ## Env vars needed
 

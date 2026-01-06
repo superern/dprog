@@ -1,10 +1,12 @@
-import type { APIGatewayProxyEventV2 } from "aws-lambda";
+import type { APIGatewayProxyEvent } from "aws-lambda";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { jsonResponse } from "../../lib/response.js";
 
 type PresignRequest = {
   key?: string;
+  docId?: string;
+  title?: string;
   contentType?: string;
   expiresInSeconds?: number;
 };
@@ -26,7 +28,10 @@ const s3Client = new S3Client({
   }
 });
 
-export async function handler(event: APIGatewayProxyEventV2) {
+export async function handler(event: APIGatewayProxyEvent) {
+
+  console.log('Presign started')
+
   if (!event.body) {
     return jsonResponse(400, { error: "Missing request body." });
   }
@@ -39,6 +44,8 @@ export async function handler(event: APIGatewayProxyEventV2) {
   }
 
   const key = payload.key?.trim();
+  const docId = payload.docId?.trim();
+  const title = payload.title?.trim();
   const contentType = payload.contentType?.trim() || "application/octet-stream";
   const expiresIn = payload.expiresInSeconds ?? 900;
 
@@ -55,20 +62,32 @@ export async function handler(event: APIGatewayProxyEventV2) {
   }
 
   try {
+    const metadata: Record<string, string> = {};
+    if (docId) metadata["doc-id"] = docId;
+    if (title) metadata.title = title;
+
     const command = new PutObjectCommand({
       Bucket: bucket,
       Key: key,
-      ContentType: contentType
+      ContentType: contentType,
+      Metadata: metadata
     });
 
     const url = await getSignedUrl(s3Client, command, { expiresIn });
+
+    const requiredHeaders: Record<string, string> = {
+      "Content-Type": contentType
+    };
+    if (docId) requiredHeaders["x-amz-meta-doc-id"] = docId;
+    if (title) requiredHeaders["x-amz-meta-title"] = title;
 
     return jsonResponse(200, {
       url,
       method: "PUT",
       bucket,
       key,
-      expiresInSeconds: expiresIn
+      expiresInSeconds: expiresIn,
+      requiredHeaders
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error.";

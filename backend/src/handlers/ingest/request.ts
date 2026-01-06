@@ -1,4 +1,4 @@
-import type { APIGatewayProxyEventV2 } from "aws-lambda";
+import type { APIGatewayProxyEvent } from "aws-lambda";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { jsonResponse } from "../../lib/response.js";
 
@@ -19,7 +19,7 @@ const sqs = new SQSClient({
   }
 });
 
-export async function handler(event: APIGatewayProxyEventV2) {
+export async function handler(event: APIGatewayProxyEvent) {
   if (!event.body) {
     return jsonResponse(400, { error: "Missing request body." });
   }

@@ -1,4 +1,4 @@
-import type { APIGatewayProxyResultV2 } from "aws-lambda";
+import type { APIGatewayProxyResult } from "aws-lambda";
 
 type ErrorBody = { error: string };
 
@@ -10,7 +10,7 @@ const defaultHeaders = {
   "Access-Control-Allow-Headers": "Content-Type"
 };
 
-export function jsonResponse(statusCode: number, body: Json): APIGatewayProxyResultV2 {
+export function jsonResponse(statusCode: number, body: Json): APIGatewayProxyResult {
   return {
     statusCode,
     headers: defaultHeaders,

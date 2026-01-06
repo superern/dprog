@@ -18,11 +18,15 @@ provider:
     PINECONE_NAMESPACE: ${env:PINECONE_NAMESPACE, ""}
     SQS_ENDPOINT: ${env:SQS_ENDPOINT, "http://localhost:4566"}
     SQS_QUEUE_URL: ${env:SQS_QUEUE_URL, "http://localhost:4566/000000000000/ingest-q"}
+    TIKA_URL: ${env:TIKA_URL, "http://localhost:9998"}
+    S3_RAW_PREFIX: ${env:S3_RAW_PREFIX, "raw/"}
+    S3_DONE_PREFIX: ${env:S3_DONE_PREFIX, "done/"}
 
 plugins:
   - serverless-esbuild
   - serverless-offline-sqs
   - serverless-offline
+  - serverless-localstack
   - serverless-dotenv-plugin
 
 useDotenv: true
@@ -35,6 +39,9 @@ custom:
     target: "node18"
     platform: "node"
     format: "cjs"
+    outputWorkFolder: "esbuild"
+    outputBuildFolder: "build"
+    keepOutputDirectory: true
   serverless-offline:
     httpPort: 8080
   serverless-offline-sqs:
@@ -44,32 +51,51 @@ custom:
     region: ${env:AWS_REGION, "us-east-1"}
     accessKeyId: ${env:AWS_ACCESS_KEY_ID, "test"}
     secretAccessKey: ${env:AWS_SECRET_ACCESS_KEY, "test"}
+  localstack:
+    stages:
+      - local
+    host: http://localhost
+    edgePort: 4566
+    autostart: false
   dotenv:
     path: .env
 
 functions:
+  presign:
+    handler: src/handlers/ingest/presign.handler
+    events:
+      - http:
+          path: /ingest/presign
+          method: post
+          cors: true
+  textract:
+    handler: src/handlers/ingest/textract.handler
+    events:
+      - s3:
+          bucket: dprog
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: raw/
   ingest:
     handler: src/handlers/ingest/ingest.handler
     events:
       - sqs: arn:aws:sqs:${self:provider.region}:000000000000:ingest-q
+
+#  I will retain this just in case I need again for better UI
   ingestRequest:
     handler: src/handlers/ingest/request.handler
     events:
-      - httpApi:
+      - http:
           path: /ingest
           method: post
-  presign:
-    handler: src/handlers/ingest/presign.handler
-    events:
-      - httpApi:
-          path: /ingest/presign
-          method: post
+          cors: true
   ask:
     handler: src/handlers/ask.handler
     events:
-      - httpApi:
+      - http:
           path: /ask
           method: post
+          cors: true
 resources:
   Resources:
     DprogBucket:

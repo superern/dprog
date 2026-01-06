@@ -1,4 +1,4 @@
-import type { APIGatewayProxyEventV2 } from "aws-lambda";
+import type { APIGatewayProxyEvent } from "aws-lambda";
 import { jsonResponse } from "../lib/response.js";
 import { embedTexts, openai, chatModel } from "../lib/openai.js";
 import { pineconeIndex, pineconeNamespace } from "../lib/pinecone.js";
@@ -24,7 +24,7 @@ function buildPrompt(question: string, chunks: { docId: string; title: string; t
   return `You are a helpful assistant answering questions using the provided context.\n\nContext:\n${context}\n\nQuestion: ${question}\nAnswer using only the context. If the context is insufficient, say you don't have enough information.`;
 }
 
-export async function handler(event: APIGatewayProxyEventV2) {
+export async function handler(event: APIGatewayProxyEvent) {
   if (!event.body) {
     return jsonResponse(400, { error: "Missing request body." });
   }

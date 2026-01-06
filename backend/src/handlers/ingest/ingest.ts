@@ -1,5 +1,5 @@
 import type { SQSEvent } from "aws-lambda";
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { chunkText } from "../../lib/chunk.js";
 import { embedTexts } from "../../lib/openai.js";
 import { pineconeIndex, pineconeNamespace } from "../../lib/pinecone.js";
@@ -10,6 +10,7 @@ type IngestMessage = {
   docId: string;
   title: string;
   contentType?: string;
+  text?: string;
 };
 
 const s3Client = new S3Client({
@@ -35,6 +36,11 @@ async function streamToString(body: unknown) {
 }
 
 export async function handler(event: SQSEvent) {
+  console.log('Ingest started')
+  console.log('Starting to chunk and embed the file')
+  const rawPrefix = process.env.S3_RAW_PREFIX || "raw/";
+  const donePrefix = process.env.S3_DONE_PREFIX || "done/";
+
   for (const record of event.Records) {
     let message: IngestMessage;
     try {
@@ -57,27 +63,35 @@ export async function handler(event: SQSEvent) {
       throw new Error("SQS message missing key, docId, or title.");
     }
 
-    let response;
-    try {
-      response = await s3Client.send(
-        new GetObjectCommand({
-          Bucket: bucket,
-          Key: key
-        })
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to fetch s3://${bucket}/${key}: ${message}`);
-    }
+    let rawText = message.text?.trim();
+    let contentType = message.contentType || "application/octet-stream";
 
-    const contentType = message.contentType || response.ContentType || "application/octet-stream";
-    const rawText = await streamToString(response.Body);
+    if (!rawText) {
+      let response;
+      try {
+        response = await s3Client.send(
+          new GetObjectCommand({
+            Bucket: bucket,
+            Key: key
+          })
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to fetch s3://${bucket}/${key}: ${message}`);
+      }
 
-    if (!rawText || rawText.trim().length === 0) {
-      throw new Error(`Empty content for ${bucket}/${key}`);
+      contentType = message.contentType || response.ContentType || "application/octet-stream";
+      rawText = await streamToString(response.Body);
+
+      if (!rawText || rawText.trim().length === 0) {
+        throw new Error(`Empty content for ${bucket}/${key}`);
+      }
     }
 
     if (!contentType.startsWith("text/")) {
+      if (!message.text) {
+        throw new Error(`Missing extracted text for non-text content ${contentType} at s3://${bucket}/${key}.`);
+      }
       console.warn(`Non-text content type (${contentType}) for ${bucket}/${key}.`);
     }
 
@@ -111,6 +125,28 @@ export async function handler(event: SQSEvent) {
     }));
 
     await index.upsert(vectors);
+    if (key.startsWith(rawPrefix)) {
+      const trimmedRawPrefix = rawPrefix.endsWith("/") ? rawPrefix : `${rawPrefix}/`;
+      const trimmedDonePrefix = donePrefix.endsWith("/") ? donePrefix : `${donePrefix}/`;
+      const destinationKey = `${trimmedDonePrefix}${key.slice(trimmedRawPrefix.length)}`;
+
+      await s3Client.send(
+        new CopyObjectCommand({
+          Bucket: bucket,
+          CopySource: `${bucket}/${key}`,
+          Key: destinationKey,
+          MetadataDirective: "COPY"
+        })
+      );
+      await s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: bucket,
+          Key: key
+        })
+      );
+      console.log(`Moved s3://${bucket}/${key} to s3://${bucket}/${destinationKey}.`);
+    }
+
     console.log(`Ingested ${vectors.length} chunks for ${docId}.`);
   }
 }
