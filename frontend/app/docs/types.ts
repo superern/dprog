@@ -2,8 +2,7 @@ export type UploadStatus =
   | "idle"
   | "presigning"
   | "uploading"
-  | "ingesting"
-  | "done"
+  | "uploaded"
   | "error";
 
 export type UploadItem = {
@@ -22,4 +21,5 @@ export type PresignResponse = {
   bucket: string;
   key: string;
   expiresInSeconds: number;
+  requiredHeaders?: Record<string, string>;
 };

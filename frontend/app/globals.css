@@ -385,13 +385,12 @@ a {
 }
 
 .status-pill.presigning,
-.status-pill.uploading,
-.status-pill.ingesting {
+.status-pill.uploading {
   background: #f1e9d7;
   color: #5c4a36;
 }
 
-.status-pill.done {
+.status-pill.uploaded {
   background: #e3f1e1;
   color: #2e5d34;
 }

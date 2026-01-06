@@ -24,16 +24,6 @@ function normalizeName(value: string) {
     .replace(/-+/g, "-");
 }
 
-function toBase64(buffer: ArrayBuffer) {
-  let binary = "";
-  const bytes = new Uint8Array(buffer);
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-  }
-  return btoa(binary);
-}
-
 function fileExtension(name: string) {
   const match = name.toLowerCase().match(/\.([a-z0-9]+)$/);
   return match ? match[1] : "";
@@ -71,7 +61,7 @@ export default function DocsPage() {
       const presignResponse = await fetch(`${apiBase}/ingest/presign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: item.key, contentType })
+        body: JSON.stringify({ key: item.key, contentType, docId: item.docId, title: item.title })
       });
 
       const presignData = (await presignResponse.json()) as PresignResponse & {
@@ -84,59 +74,22 @@ export default function DocsPage() {
 
       updateItem(item.clientId, { status: "uploading" });
 
-      const isLocalS3 = presignData.url.includes("localhost:4569");
-      if (isLocalS3) {
-        const buffer = await item.file.arrayBuffer();
-        const uploadResponse = await fetch(`${apiBase}/ingest/upload`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            key: presignData.key,
-            contentType,
-            fileBase64: toBase64(buffer)
-          })
-        });
-
-        const uploadData = (await uploadResponse.json()) as { error?: string };
-        if (!uploadResponse.ok) {
-          throw new Error(uploadData.error || "Upload failed.");
-        }
-      } else {
-        const putResponse = await fetch(presignData.url, {
-          method: "PUT",
-          headers: { "Content-Type": contentType },
-          body: item.file
-        });
-
-        if (!putResponse.ok) {
-          throw new Error("Upload failed.");
-        }
-      }
-
-      updateItem(item.clientId, { status: "ingesting" });
-
-      const ingestResponse = await fetch(`${apiBase}/ingest`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: presignData.key,
-          docId: item.docId,
-          title: item.title,
-          contentType
-        })
+      const putResponse = await fetch(presignData.url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": contentType,
+          ...(presignData.requiredHeaders ?? {})
+        },
+        body: item.file
       });
 
-      const ingestData = (await ingestResponse.json()) as Record<string, unknown> & {
-        error?: string;
-      };
-
-      if (!ingestResponse.ok) {
-        throw new Error(ingestData.error || "Failed to queue ingest.");
+      if (!putResponse.ok) {
+        throw new Error("Upload failed.");
       }
 
       updateItem(item.clientId, {
-        status: "done",
-        response: ingestData
+        status: "uploaded",
+        response: { uploaded: true, key: presignData.key }
       });
       setStatus("idle");
     } catch (err) {
@@ -212,8 +165,8 @@ export default function DocsPage() {
           <p className="eyebrow">Ingest documents</p>
           <h1>Drop files to upload and queue ingestion.</h1>
           <p className="lead">
-            Upload a document, then we will request a presigned URL, upload it to S3, and queue
-            ingestion automatically. Supported formats mirror what Apache Tika can parse.
+            Upload a document, then we will request a presigned URL and upload it to S3. The backend
+            automatically extracts text with Tika and queues the ingest workflow.
           </p>
           <div className="format-list">
             <span>Supported uploads:</span>
