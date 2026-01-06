@@ -2,122 +2,18 @@
 
 Frontend (Next.js + TypeScript) and backend (Serverless + Pinecone + OpenAI).
 
-## Frontend
+## Step-by-step Setup Guide
 
-### How to run locally
-
-1) Install dependencies
-```
-cd frontend
-npm install
-```
-
-2) Add `frontend/.env.local` with required variables (see below).
-
-3) Run dev server
-```
-npm run dev
-```
-
-The app will be available at `http://localhost:3000`.
-
-### Env vars needed
-
-Required:
-- NEXT_PUBLIC_DPROG_API (e.g. http://localhost:8080)
-
-### High-level deploy steps
-
-1) Set `NEXT_PUBLIC_DPROG_API` to your deployed backend URL.
-2) Build and start:
-```
-npm run build
-npm run start
-```
-
-### Assumptions and trade-offs
-
-- Uses client-side fetches to call the backend; no auth or session handling.
-- UI expects `answer` and `sources` fields but falls back to common alternatives.
-- Simple success/error handling to keep UX minimal.
-
-If I had more time, I would:
-- Add form validation and better error affordances.
-- Add loading skeletons and improved empty states.
-- Add tests (unit + E2E) for the form flows.
-
-## Backend
-
-Serverless backend using AWS API Gateway + Lambda (Node.js/TypeScript) with Pinecone + OpenAI.
-
-## How to run locally
-
-1) Install dependencies
-```
-npm install
-```
-
-2) Add `backend/.env` with required variables (see below).
-
-3) Start LocalStack (CloudFormation + Lambda + API Gateway + S3 + SQS)
+1) Backend dependencies
 ```
 cd backend
-npm run localstack:start
-```
-The LocalStack container is started with `--add-host=host.docker.internal:host-gateway` so Lambdas can reach services running on your host.
-If you get a "Docker not available" Lambda error, ensure Docker is running. The `localstack:start` script mounts the Docker socket so LocalStack can run Lambda containers.
-
-4) Start Tika for text extraction
-```
-npm run tika:start
+npm install
 ```
 
-5) Initialize LocalStack resources (bucket + queue + CORS, requires AWS CLI)
-```
-npm run localstack:init
-```
+2) Backend env
+Add `backend/.env` with required variables (see below).
 
-6) Deploy functions to LocalStack (wires S3 -> textract notifications)
-```
-npm run deploy:local
-```
-This deploy sets `TIKA_URL` to `http://host.docker.internal:9998` and LocalStack endpoints to `http://host.docker.internal:4566` so Lambdas can reach Tika and LocalStack from inside Docker.
-
-7) Add CORS to the bucket (required for browser uploads)
-```
-aws --endpoint-url http://localhost:4566 s3api put-bucket-cors \
-  --bucket dprog \
-  --cors-configuration '{
-    "CORSRules": [{
-      "AllowedOrigins": ["http://localhost:3000"],
-      "AllowedMethods": ["PUT","GET","HEAD","POST"],
-      "AllowedHeaders": ["*"],
-      "ExposeHeaders": ["ETag"],
-      "MaxAgeSeconds": 30000
-    }]
-  }'
-```
-
-8) Run offline (this will auto-create SQS queues if missing)
-```
-npm run offline
-```
-
-The API will be available at `http://localhost:8080`.
-
-For LocalStack-deployed APIs (used for S3-triggered textract), get the REST API ID:
-```
-AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 \
-aws --endpoint-url http://localhost:4566 apigateway get-rest-apis
-```
-Then call:
-```
-http://<api-id>.execute-api.localhost.localstack.cloud:4566/<stage>/ingest/presign
-```
-
-## Env vars needed
-
-Required:
+Env vars Required:
 - OPENAI_API_KEY
 - PINECONE_API_KEY
 - PINECONE_INDEX
@@ -133,14 +29,71 @@ Optional:
 - SQS_QUEUE_URL (default: http://localhost:4566/000000000000/ingest-q)
 - AWS_ACCESS_KEY_ID (default: test for LocalStack)
 - AWS_SECRET_ACCESS_KEY (default: test for LocalStack)
+- S3_RAW_PREFIX
+- S3_DONE_PREFIX
 
-## Example requests
-
-POST /ingest
+3) LocalStack + Tika + deploy (bootstraps local infra)
 ```
-curl -X POST http://localhost:8080/ingest \\
-  -H 'Content-Type: application/json' \\
-  -d '{\"documents\":[{\"id\":\"refund-policy\",\"title\":\"Refund Policy\",\"content\":\"Full refund within 30 days with receipt. No refunds on digital goods.\"}]}'
+npm run localstack:start
+```
+This runs:
+- `localstack:docker`: pulls and starts the LocalStack container (S3/SQS/Lambda/API Gateway/CloudFormation).
+- `localstack:wait`: waits for LocalStack to be healthy.
+- `localstack:init`: creates the S3 bucket, the SQS queue, and applies S3 CORS for browser uploads.
+- `tika:start`: pulls and starts Apache Tika on port 9998.
+- `deploy:local`: deploys the Serverless stack into LocalStack so S3 `raw/` events invoke the textract Lambda (with Docker-safe endpoints for Tika and LocalStack).
+
+4) Backend API (offline)
+```
+npm run offline
+```
+The API will be available at `http://localhost:8080`.
+
+5) Frontend dependencies
+```
+cd ../frontend
+npm install
+```
+
+6) Frontend env
+Add `frontend/.env` with required variables (see below).
+
+Env vars Required:
+- NEXT_PUBLIC_DPROG_API (e.g. http://localhost:8080)
+
+7) Frontend dev server
+```
+npm run frontend
+```
+The app will be available at `http://localhost:3000`.
+
+Optional helpers:
+- `npm run localstack:log` tails LocalStack logs.
+- `npm run localstack:stop` stops the LocalStack container.
+- `npm run tika:stop` stops the Tika container.
+
+## Frontend 
+### Assumptions and trade-offs
+
+- Uses client-side presign + direct-to-S3 upload; no auth or session handling.
+- Upload validation is MIME-based on the client; server still validates content.
+- Status is optimistic (uploaded) and does not poll for ingest completion.
+- Error handling is minimal to keep the flow simple.
+
+If I had more time, I would:
+- Add form validation and better error affordances.
+- Add loading skeletons and improved empty states.
+- Add tests (unit + E2E) for the form flows.
+
+
+## Backend
+### Example requests
+
+POST /ingest/presign
+```
+curl -X POST http://localhost:8080/ingest/presign \
+  -H 'Content-Type: application/json' \
+  -d '{"filename":"sample.pdf","contentType":"application/pdf","docId":"sample-doc","title":"Sample PDF"}'
 ```
 
 POST /ask
@@ -150,18 +103,9 @@ curl -X POST http://localhost:8080/ask \\
   -d '{\"question\":\"Can I get a refund on a digital product?\",\"topK\":3}'
 ```
 
-## High-level deploy steps
+### Assumptions and trade-offs
 
-1) Configure AWS credentials for Serverless (e.g. `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`).
-2) Ensure Pinecone + OpenAI env vars are set in your deploy environment.
-3) Deploy:
-```
-npm run deploy
-```
-4) Use the returned API Gateway URL for frontend calls.
-
-## Assumptions and trade-offs
-
+- Direct upload uses `/ingest/presign`; `/ingest` is no longer used in the UI flow.
 - Chunking is character-based (500 chars with 50-char overlap) for simplicity and predictability.
 - Re-ingest deletes previous chunks for the same docId before upserting; if delete fails, ingestion continues.
 - Source list is deduped by docId + title; deeper citation granularity is not included.
