@@ -7,7 +7,7 @@
     "deploy": "serverless deploy",
     "offline": "serverless offline",
     "localstack:start": "docker run --rm -it -p 4566:4566 -e SERVICES=s3,sqs -e AWS_DEFAULT_REGION=us-east-1 localstack/localstack",
-    "localstack:init": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 s3 mb s3://dprog && AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 sqs create-queue --queue-name ingest-q"
+    "localstack:init": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 s3 mb s3://dprog && AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 sqs create-queue --queue-name ingest-q && AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1 aws --endpoint-url http://localhost:4566 s3api put-bucket-cors --bucket dprog --cors-configuration '{\"CORSRules\":[{\"AllowedOrigins\":[\"http://localhost:3000\"],\"AllowedMethods\":[\"PUT\",\"GET\",\"HEAD\",\"POST\"],\"AllowedHeaders\":[\"*\"],\"ExposeHeaders\":[\"ETag\"],\"MaxAgeSeconds\":30000}]}'"
   },
   "dependencies": {
     "@aws-sdk/client-sqs": "^3.637.0",

@@ -65,7 +65,7 @@ cd backend
 npm run localstack:start
 ```
 
-4) Initialize LocalStack resources (bucket + queue, requires AWS CLI)
+4) Initialize LocalStack resources (bucket + queue + CORS, requires AWS CLI)
 ```
 npm run localstack:init
 ```
