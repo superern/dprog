@@ -2,6 +2,14 @@
 
 Frontend (Next.js + TypeScript) and backend (Serverless + Pinecone + OpenAI).
 
+## Requirements
+
+- Node.js 18.x (matches Lambda runtime).
+- npm 9+.
+- Docker 24+ (for LocalStack and Tika).
+- AWS CLI v2.
+- Serverless Framework v3.38+.
+
 ## Step-by-step Setup Guide
 
 1) Backend dependencies
