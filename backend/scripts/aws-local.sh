@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-test} \
+AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-test} \
+AWS_REGION=${AWS_REGION:-us-east-1} \
+LOCALSTACK_ENDPOINT=${LOCALSTACK_ENDPOINT:-http://localhost:4566} \
+  "$@"
