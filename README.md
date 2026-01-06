@@ -10,6 +10,8 @@ Frontend (Next.js + TypeScript) and backend (Serverless + Pinecone + OpenAI).
 - AWS CLI v2.
 - Serverless Framework v3.38+.
 
+![img.png](img.png)
+![img_1.png](img_1.png)
 ## Step-by-step Setup Guide
 
 1) Backend dependencies
