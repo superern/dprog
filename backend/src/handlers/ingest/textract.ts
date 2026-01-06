@@ -1,7 +1,7 @@
 import type { S3Event } from "aws-lambda";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import { extractTextWithTika } from "../../lib/tika.js";
+import { extractTextWithTika } from "../../lib/tika";
 
 type IngestMessage = {
   bucket: string;

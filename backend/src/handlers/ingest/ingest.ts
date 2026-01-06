@@ -1,8 +1,8 @@
 import type { SQSEvent } from "aws-lambda";
 import { CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { chunkText } from "../../lib/chunk.js";
-import { embedTexts } from "../../lib/openai.js";
-import { pineconeIndex, pineconeNamespace } from "../../lib/pinecone.js";
+import { chunkText } from "../../lib/chunk";
+import { embedTexts } from "../../lib/openai";
+import { pineconeIndex, pineconeNamespace } from "../../lib/pinecone";
 
 type IngestMessage = {
   bucket?: string;

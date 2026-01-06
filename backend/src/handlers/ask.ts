@@ -1,7 +1,8 @@
 import type { APIGatewayProxyEvent } from "aws-lambda";
-import { jsonResponse } from "../lib/response.js";
-import { embedTexts, openai, chatModel } from "../lib/openai.js";
-import { pineconeIndex, pineconeNamespace } from "../lib/pinecone.js";
+import { jsonResponse } from "../lib/response";
+import { embedTexts, openai, chatModel } from "../lib/openai";
+import { pineconeIndex, pineconeNamespace } from "../lib/pinecone";
+import { buildPrompt } from "../lib/prompt";
 
 type AskRequest = {
   question: string;
@@ -12,17 +13,6 @@ type Source = {
   docId: string;
   title: string;
 };
-
-function buildPrompt(question: string, chunks: { docId: string; title: string; text: string }[]) {
-  const context = chunks
-    .map(
-      (chunk, index) =>
-        `Source ${index + 1}\nDoc: ${chunk.docId}\nTitle: ${chunk.title}\nText: ${chunk.text}`
-    )
-    .join("\n\n");
-
-  return `You are a helpful assistant answering questions using the provided context.\n\nContext:\n${context}\n\nQuestion: ${question}\nAnswer using only the context. If the context is insufficient, say you don't have enough information.`;
-}
 
 export async function handler(event: APIGatewayProxyEvent) {
   if (!event.body) {

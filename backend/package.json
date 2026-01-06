@@ -5,6 +5,7 @@
   "scripts": {
     "build": "serverless package",
     "deploy": "serverless deploy",
+    "test": "jest",
     "backend": "serverless offline",
     "tika:start": "docker pull apache/tika:latest && (docker ps -q -f name=dprog-tika | grep -q . || docker run -d --name dprog-tika -p 9998:9998 apache/tika:latest)",
     "tika:stop": "docker rm -f dprog-tika",
@@ -24,22 +25,25 @@
     "lambda:textract": "./scripts/aws-local.sh lambda get-function-configuration --function-name dprog-backend-local-textract"
   },
   "dependencies": {
-    "@aws-sdk/client-sqs": "^3.637.0",
     "@aws-sdk/client-s3": "^3.637.0",
+    "@aws-sdk/client-sqs": "^3.637.0",
     "@aws-sdk/s3-request-presigner": "^3.637.0",
     "@pinecone-database/pinecone": "^2.0.1",
     "openai": "^4.56.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.137",
+    "@types/jest": "^29.5.12",
     "@types/node": "^20.14.12",
     "esbuild": "^0.23.1",
+    "jest": "^29.7.0",
     "serverless": "^3.38.0",
+    "serverless-dotenv-plugin": "^6.0.0",
     "serverless-esbuild": "^1.54.4",
+    "serverless-localstack": "^1.0.0",
     "serverless-offline": "^12.0.0",
     "serverless-offline-sqs": "^7.0.0",
-    "serverless-localstack": "^1.0.0",
-    "serverless-dotenv-plugin": "^6.0.0",
+    "ts-jest": "^29.2.5",
     "typescript": "^5.5.4"
   }
 }

@@ -1,6 +1,6 @@
 import type { APIGatewayProxyEvent } from "aws-lambda";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import { jsonResponse } from "../../lib/response.js";
+import { jsonResponse } from "../../lib/response";
 
 type IngestRequest = {
   bucket?: string;
