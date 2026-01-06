@@ -45,7 +45,7 @@ custom:
   serverless-offline:
     httpPort: 8080
   serverless-offline-sqs:
-    autoCreate: true
+    autoCreate: false
     apiVersion: "2012-11-05"
     endpoint: http://localhost:4566
     region: ${env:AWS_REGION, "us-east-1"}
